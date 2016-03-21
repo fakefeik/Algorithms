@@ -1,0 +1,7 @@
+cmake_minimum_required (VERSION 2.6)
+
+add_subdirectory(1B_brackets)
+add_subdirectory(2C_minimal_covering_circle)
+add_subdirectory(3D_k_statistics)
+add_subdirectory(4A_tree_traversal)
+add_subdirectory(5B_cyclic_parking)
