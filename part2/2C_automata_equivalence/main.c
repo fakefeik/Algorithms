@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-
+#include <stdbool.h>
 
 typedef struct Pair
 {
@@ -26,7 +25,7 @@ typedef struct Queue
 typedef struct Node
 {
     int *transitions;
-    int isTerminal;
+    bool isTerminal;
 } Node;
 
 typedef struct Automata
@@ -82,7 +81,7 @@ void Queue_destroy(Queue *queue)
     free(queue);
 }
 
-Automata *Automata_create(int nodesCount, int alphabetLength, int **transitions, int *terminal)
+Automata *Automata_create(int nodesCount, int alphabetLength, int **transitions, bool *terminal)
 {
     Automata *a = (Automata *)malloc(sizeof(Automata));
     a->nodes = (Node **)malloc(sizeof(Node) * nodesCount);
@@ -120,8 +119,8 @@ int areEquivalent(Automata *a1, Automata *a2)
     if (a1->nodes[p.fst]->isTerminal != a2->nodes[p.snd]->isTerminal)
         return 0;
 
-    int *used1 = (int *)calloc(a1->count, sizeof(int));
-    int *used2 = (int *)calloc(a2->count, sizeof(int));
+    bool *used1 = (bool *)calloc(a1->count, sizeof(bool));
+    bool *used2 = (bool *)calloc(a2->count, sizeof(bool));
     used1[p.fst] = 1;
     used2[p.snd] = 1;
 
@@ -138,17 +137,25 @@ int areEquivalent(Automata *a1, Automata *a2)
             int next2 = a2->nodes[v]->transitions[i];
             
             if (a1->nodes[next1]->isTerminal != a2->nodes[next2]->isTerminal)
+            {
+                free(used1);
+                free(used2);
+                Queue_destroy(queue);
                 return 0;
+            }
 
             if (!used1[next1] || !used2[next2])
             {
                 T q = { next1, next2 };
                 Queue_enqueue(queue, q);
-                used1[next1] = 1;
-                used2[next2] = 1;
+                used1[next1] = true;
+                used2[next2] = true;
             }
         }
     }
+    free(used1);
+    free(used2);
+    Queue_destroy(queue);
     return 1;
 }
 
@@ -163,21 +170,21 @@ int main(int argc, char *argv[])
     }
 
     Automata **automatas = (Automata **)malloc(sizeof(Automata *) * 2);
-    for (int _ = 0; _ < 2; _++)
+    for (int automataIndex = 0; automataIndex < 2; automataIndex++)
     {
         int n, k, l;
         in == NULL 
             ? scanf("%d %d %d", &n, &k, &l) 
             : fscanf(in, "%d %d %d", &n, &k, &l);;
 
-        int *terminal = (int *)calloc(n, sizeof(int));
+        bool *terminal = (bool *)calloc(n, sizeof(bool));
         for (int i = 0; i < k; i++)
         {
             int t;
             in == NULL 
                 ? scanf("%d", &t) 
                 : fscanf(in, "%d", &t);
-            terminal[t] = 1;
+            terminal[t] = true;
         }
 
         int **transitions = (int **)malloc(sizeof(int *) * n);
@@ -193,7 +200,9 @@ int main(int argc, char *argv[])
             transitions[from][c - 'a'] = to;
         }
 
-        automatas[_] = Automata_create(n, l, transitions, terminal);
+        automatas[automataIndex] = Automata_create(n, l, transitions, terminal);
+        
+        free(transitions);
     }
     
     int equivalent = areEquivalent(automatas[0], automatas[1]);
@@ -202,8 +211,8 @@ int main(int argc, char *argv[])
         ? printf("%s", equivalent ? "EQUIVALENT" : "NOT EQUIVALENT")
         : fprintf(out, "%s", equivalent ? "EQUIVALENT" : "NOT EQUIVALENT");
     
-    for (int _ = 0; _ < 2; _++)
-        Automata_destroy(automatas[_]);
+    for (int automataIndex = 0; automataIndex < 2; automataIndex++)
+        Automata_destroy(automatas[automataIndex]);
     
     free(automatas);
 }
